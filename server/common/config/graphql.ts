@@ -1,12 +1,15 @@
 import { Application } from 'express';
-import { GraphQLOptions } from 'apollo-server-core';
-import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
-import { setupSchema } from '../../graphql/schema';
-import Register from 'graphql-playground-middleware-express';
-import { MiddlewareOptions } from 'graphql-playground-html';
-import configJWT from './jwt';
+import { Config } from 'apollo-server-core';
+import { ApolloServer } from 'apollo-server-express';
+import { InMemoryLRUCache } from 'apollo-server-caching';
+import {
+  mocks,
+  schemaDirectives,
+  resolvers,
+  typeDefs
+} from '../../graphql/setupSchema';
 import * as bodyParser from 'body-parser';
-import { formatError } from 'apollo-errors';
+// import { formatError } from 'apollo-errors';
 const expressJwt = require('express-jwt');
 import * as fs from 'fs';
 const DataLoader = require('dataloader');
@@ -17,6 +20,8 @@ import {
   fetchStarship
 } from '../../graphql/dataloader/starwars';
 
+import StarwarsAPI from '../../graphql/datasource/starwars-api';
+
 // Tracing Configuration
 const tracing =
   process.env.GRAPHQL_TRACING !== undefined &&
@@ -24,7 +29,7 @@ const tracing =
     ? true
     : false;
 
-const getGraphQLConfig = (req: any): GraphQLOptions => {
+const getGraphQLConfig = (): Config => {
   // Data Loaders with Batch and Cache Enabled
   const peopleLoader = new DataLoader(keys =>
     Promise.all(keys.map(fetchPeople))
@@ -38,21 +43,56 @@ const getGraphQLConfig = (req: any): GraphQLOptions => {
   const peopleWithPlanetLoader = new DataLoader(keys =>
     Promise.all(keys.map(fetchPeopleWithPlanet))
   );
-  let user = Promise.resolve(undefined);
-  if (process.env.JWT_AUTH === 'true') {
-    user = req.user ? req.user : Promise.resolve(undefined);
-  }
+  const getuser = req => {
+    if (process.env.JWT_AUTH === 'true') {
+      return req.user ? req.user : Promise.resolve('');
+    }
+  };
+
+  const playground =
+    process.env.GRAPHQL_PLAYGROUND !== undefined &&
+    process.env.GRAPHQL_PLAYGROUND === 'true'
+      ? true
+      : false;
+
+  const serverMocks =
+    process.env.GRAPHQL_MOCK !== undefined &&
+    process.env.GRAPHQL_MOCK === 'true'
+      ? mocks
+      : false;
+
+  const myStarwarsAPI: any = new StarwarsAPI();
 
   return {
-    schema: setupSchema(),
-    formatError,    // Error Handler
-    tracing: tracing,
-    context: { // Setup the user context as well as the dataload context
-      user,
-      peopleLoader,
-      planetLoader,
-      starshipLoader,
-      peopleWithPlanetLoader
+    typeDefs,
+    resolvers,
+    dataSources: () => {
+      return {
+        starwarsAPI: myStarwarsAPI
+      };
+    },
+    cache: new InMemoryLRUCache({ maxSize: 100 }),
+    schemaDirectives,
+    mocks: serverMocks,
+   // formatError, // Error Handler
+    tracing,
+    playground,
+    introspection: true,
+    context: async ({ req, connection }) => {
+      if (connection) {
+        // check connection for metadata
+        return {};
+      } else {
+        const user = getuser(req);
+        return {
+          // Setup the user context as well as the dataload context
+          user,
+          peopleLoader,
+          planetLoader,
+          starshipLoader,
+          peopleWithPlanetLoader
+        };
+      }
     }
   };
 };
@@ -60,47 +100,25 @@ const getGraphQLConfig = (req: any): GraphQLOptions => {
  * Configure GraphQL endpoints
  * @param app Express Application
  */
-export const configGraphQL = async (app: Application) => {
+
+export const configGraphQL = (app: Application): ApolloServer => {
   // If JWT Auth is enabled added JWT header verification for all graphql
   // calls
   if (process.env.JWT_AUTH === 'true') {
-    const RSA_PUBLIC_KEY = await fs.readFileSync(process.env.RSA_PUBLIC_KEY_FILE);
+    const RSA_PUBLIC_KEY = fs.readFileSync(process.env.RSA_PUBLIC_KEY_FILE);
     // If a valid Bearer token is present the req.user object is set
     // set those details in the context.user
     // The context can then be used by the resolvers to validate user credentials
-    await app.use(
+    app.use(
       '/graphql',
       bodyParser.json(),
-      expressJwt({ secret: RSA_PUBLIC_KEY, credentialsRequired: false }),
-      graphqlExpress((req: any) => getGraphQLConfig(req))
-    );
-  } else {
-    // Add GraphQL Endpoint
-    await app.use(
-      '/graphql',
-      bodyParser.json(),
-      graphqlExpress((req: any) => getGraphQLConfig(req))
+      expressJwt({ secret: RSA_PUBLIC_KEY, credentialsRequired: false })
     );
   }
 
-  // Add GraphQL Playground if enabled
-  if (process.env.GRAPHQL_PLAYGROUND === 'true') {
-    // GraphQL playground currently explects both the endpoints to be same
-    const graphQLPlaygroundOptions: MiddlewareOptions = {
-      endpoint: '/graphql',
-      subscriptionsEndpoint: '/graphql'
-    };
-    app.get('/playground', Register(graphQLPlaygroundOptions));
-  }
+  const server = new ApolloServer(getGraphQLConfig());
+  const path = '/graphql';
+  server.applyMiddleware({ app, path });
 
-  // Add GraphQL Explorer Endpoint as well as subscription endpoint
-  if (process.env.GRAPHQL_IQL === 'true') {
-    app.get(
-      '/graphiql',
-      graphiqlExpress({
-        endpointURL: '/graphql',
-        subscriptionsEndpoint: `ws://localhost:${process.env.PORT}/graphql`
-      })
-    );
-  }
+  return server;
 };

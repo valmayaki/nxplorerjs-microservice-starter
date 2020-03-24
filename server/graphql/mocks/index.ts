@@ -1,15 +1,12 @@
 import * as casual from 'casual';
-import * as RandExp from 'randexp';
-import { MockList } from 'graphql-tools';
-import { startCase } from 'lodash';
-const num_format = '########';
-const randomID = new RandExp(/EX-\d{3}/).gen();
+import { MockList } from 'apollo-server';
+const numFormat = '########';
 
 export default {
   Int: () => casual.integer(0),
   PeopleType: () => ({
     name: casual.first_name + ' ' + casual.last_name,
-    mass: casual.numerify(num_format),
+    mass: casual.numerify(numFormat),
     hair_color: casual.safe_color_name,
     skin_color: casual.safe_color_name,
     eye_color: casual.safe_color_name,
@@ -25,10 +22,10 @@ export default {
     url: casual.url
   }),
   ExampleType: () => ({
-    id:  casual.integer(0),
+    id: casual.integer(0),
     name: casual.title
   }),
   RootQueryType: () => ({
-    examplesMock: () => new MockList(4),
+    examplesMock: () => new MockList(4)
   })
 };

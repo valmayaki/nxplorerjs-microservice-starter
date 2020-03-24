@@ -1,15 +1,15 @@
 import * as request from 'supertest';
 import './common/env';
 import Server from './common/server';
+import * as express from 'express';
 
-const app = new Server().getServer().build();
+
+const exApp = express();
+const app = new Server(exApp).getServer().build();
 
 app.listen(process.env.PORT);
 
-
-
 describe('nxplorerjs-microservice: routes spec', () => {
-
   it('should get 200 response from home page', done => {
     request(app)
       .get('/')
@@ -27,8 +27,9 @@ describe('nxplorerjs-microservice: routes spec', () => {
     request(app)
       .get('/api/v1/examples')
       .expect(200)
-      .expect((res) => {
-        res.body = "[{'id': 0, 'name': 'example 0'}, {'id': 1, 'name': 'example 1'}]";
+      .expect(res => {
+        res.body =
+          "[{'id': 0, 'name': 'example 0'}, {'id': 1, 'name': 'example 1'}]";
       })
       .end((err, res) => {
         if (err) {
@@ -51,5 +52,4 @@ describe('nxplorerjs-microservice: routes spec', () => {
         }
       });
   });
-
 });

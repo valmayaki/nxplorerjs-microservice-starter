@@ -4,13 +4,12 @@ import {
   BaseProductPrice,
   BaseProductInventory,
   BaseProductOption
-} from '../models/product.model';
+} from '../models';
 
 /**
  * Product Service Interface
  */
 interface IProduct {
-
   allBaseProducts(): Observable<BaseProduct[]>;
 
   baseProductbyId(id: number): Observable<BaseProduct>;
@@ -28,7 +27,6 @@ interface IProduct {
   baseProductInventorybyId(id: number): Observable<BaseProductInventory>;
 
   getProductOptionPricebyId(id: number): Observable<BaseProductPrice[]>;
-
 }
 
 export default IProduct;

@@ -1,27 +1,17 @@
-import HystrixService from '../../services/hystrix-demo.service';
 import { Request, Response } from 'express';
-import { Observable } from 'rxjs/Observable';
-import { ErrorResponseBuilder } from '../../services/response-builder';
-import { HttpError } from '../../models/error.model';
-import { HttpStatus } from '../../services/http-status-codes';
-import container from '../../../common/config/ioc_config';
-import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
-import { inject, injectable } from 'inversify';
-
-import ILogger from '../../../common/interfaces/ilogger';
-import IMetrics from '../../../common/interfaces/imetrics';
-import IHystrixDemo from '../../interfaces/ihystrix-demo';
+import { inject } from 'inversify';
 import {
-  interfaces,
   controller,
   httpGet,
-  httpPost,
-  httpDelete,
+  interfaces,
   request,
-  queryParam,
-  response,
-  requestParam
+  response
 } from 'inversify-express-utils';
+import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
+import { ILogger, IMetrics } from '../../../common/interfaces';
+import { IHystrixDemo } from '../../interfaces';
+import { HttpError } from '../../models';
+import { ErrorResponseBuilder, HttpStatus } from '../../services';
 
 /**
  * Hystrix Demo Controller
@@ -49,7 +39,7 @@ class HystrixController implements interfaces.Controller {
    */
   @httpGet('/start')
   public async start(@request() req: Request, @response() res: Response) {
-    return await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.hystrixDemoService.start().subscribe(r => {
         resolve(r);
       });
@@ -66,7 +56,7 @@ class HystrixController implements interfaces.Controller {
   @httpGet('/posts')
   public async posts(@request() req: Request, @response() res: Response) {
     this.loggerService.info(req.originalUrl);
-    return await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.hystrixDemoService.getPosts(req.query.timeOut).subscribe(
         result => {
           this.loggerService.logAPITrace(req, res, HttpStatus.OK);
@@ -74,7 +64,7 @@ class HystrixController implements interfaces.Controller {
           resolve(result);
         },
         err => {
-          const error: HttpError = <HttpError>err;
+          const error: HttpError = err as HttpError;
           const resp = new ErrorResponseBuilder()
             .setTitle(error.name)
             .setStatus(HttpStatus.NOT_FOUND)

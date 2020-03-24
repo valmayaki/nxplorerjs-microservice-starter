@@ -1,9 +1,9 @@
-import { ErrorResponseBuilder, ErrorResponse } from './response-builder';
+import { ErrorResponseBuilder } from './response-builder';
 import { HttpStatus } from './http-status-codes';
 import '../../common/env';
 
 describe('Error Response Builder Tests', () => {
-  it('can prepare and verify response builder', done => {
+  it('can prepare and verify response builder', () => {
     const errorResponse: any = {
       title: 'Test Title',
       status: HttpStatus.NOT_FOUND,
@@ -21,6 +21,5 @@ describe('Error Response Builder Tests', () => {
       .build();
 
     expect(resp).toEqual(errorResponse);
-    done();
   });
 });

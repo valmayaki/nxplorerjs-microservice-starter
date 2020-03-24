@@ -1,9 +1,7 @@
 import * as express from 'express';
-import { Container } from 'inversify';
 import * as fs from 'fs';
 const expressJwt = require('express-jwt');
-import container from '../../common/config/ioc_config';
-import { User } from '../../common/models/security.model';
+import { User } from '../models/security.model';
 
 /**
  * JWT Authentication middleware from the REST APIs
@@ -54,7 +52,7 @@ const authMiddlewareFactory = () => {
  */
 const authGraphQLMiddlewareFactory = () => {
   return (req, res, next) => {
-    console.log('Middleware called');
+    // console.log('Middleware called');
 
     // If the token is valid, req.user will be set with the JSON object decoded
     const obj: any = req;
@@ -67,10 +65,20 @@ const authGraphQLMiddlewareFactory = () => {
 };
 
 export const checkUser = async (user: any): Promise<any> => {
-  if (user.role !== undefined && 'admin' === user.role) {
+  if (user.role !== undefined && 'ADMIN' === user.role) {
     return Promise.resolve(user);
   } else {
     return Promise.reject('Unauthorised User');
+  }
+};
+
+export const getUserRole = ctx => {
+  if (process.env.JWT_AUTH === 'true') {
+    return Promise.resolve(
+      ctx.user && ctx.user.role ? ctx.user.role : 'UNKNOWN'
+    );
+  } else {
+    return Promise.resolve('UNKNOWN');
   }
 };
 

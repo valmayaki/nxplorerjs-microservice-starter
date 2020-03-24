@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 
 import ILogger from '../interfaces/ilogger';
 const pino = require('pino')();
@@ -17,27 +17,23 @@ class LogService implements ILogger {
     this.initLogger();
   }
 
-  private initLogger() {
-    this.logger = pino;
-  }
-
   public getLogger(): any {
     return this.logger;
   }
 
   public info(...message) {
     const UUID = this.getUUID();
-    this.logger.info({ UUID, ...message });
+    this.logger.info({ UUID, data: { ...message } });
   }
 
   public debug(...message) {
     const UUID = this.getUUID();
-    this.logger.debug({ UUID, ...message });
+    this.logger.debug({ UUID, data: { ...message } });
   }
 
   public error(...message) {
     const UUID = this.getUUID();
-    this.logger.error({ UUID, ...message });
+    this.logger.error({ UUID, data: { ...message } });
   }
 
   /**
@@ -82,6 +78,10 @@ class LogService implements ILogger {
 
   public getUUID() {
     return this.uuid;
+  }
+
+  private initLogger() {
+    this.logger = pino;
   }
 }
 

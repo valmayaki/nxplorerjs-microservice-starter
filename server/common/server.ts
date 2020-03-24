@@ -2,22 +2,14 @@ import * as express from 'express';
 import * as partialResponse from 'express-partial-response';
 import * as path from 'path';
 import {
-  swaggerify,
   secureApp,
   configLogging,
   configMetrics,
-  configGraphQL,
   configHealthChecks,
   addCompression
 } from './config';
-import container from './config/ioc_config';
-import SERVICE_IDENTIFIER from '../common/constants/identifiers';
-import {
-  interfaces,
-  InversifyExpressServer,
-  TYPE
-} from 'inversify-express-utils';
-
+import { IOCContainer } from './config/ioc_config';
+import { InversifyExpressServer } from 'inversify-express-utils';
 
 const responseTime = require('response-time');
 
@@ -26,22 +18,32 @@ const responseTime = require('response-time');
  */
 export default class ExpressServer {
   public server: InversifyExpressServer;
-  constructor() {
+
+  constructor(exApp) {
     let root: string;
 
     // Setup application root
-    if (process.env.NODE_ENV === 'development') {
-      root = path.normalize(__dirname + '/../..');
-    } else {
-      root = path.normalize('.');
-    }
-
+    root =
+      process.env.NODE_ENV === 'development'
+        ? path.normalize(__dirname + '/../..')
+        : path.normalize('.');
+    const container = IOCContainer.getInstance().getContainer();
     this.server = new InversifyExpressServer(container, undefined, {
       rootPath: '/api/v1'
-    });
+    },exApp);
     this.server.setConfig(app => {
       // Add security configuration
       secureApp(app);
+
+      app.use((req, res, next) => {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
+        res.header(
+          'Access-Control-Allow-Headers',
+          'Origin, X-Requested-With, Content-Type, Accept'
+        );
+        next();
+      });
 
       // Add public folder
       app.use(express.static(`${root}/public`));
@@ -59,17 +61,12 @@ export default class ExpressServer {
       // Add metrics configuration
       configMetrics(app);
 
-      // Graphql
-      configGraphQL(app);
-
       // Configure Healthchecks
       configHealthChecks(app);
 
       // Add Compression support
       addCompression(app);
 
-      // Add swagger support
-      swaggerify(app);
     });
   }
 

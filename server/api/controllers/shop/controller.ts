@@ -1,27 +1,18 @@
-import ProductService from '../../services/product.service';
 import { Request, Response } from 'express';
-import { Observable } from 'rxjs/Observable';
-import { ErrorResponseBuilder } from '../../services/response-builder';
-import { HttpError } from '../../models/error.model';
-import { HttpStatus } from '../../services/http-status-codes';
-import container from '../../../common/config/ioc_config';
-import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
-import { inject, injectable } from 'inversify';
-
-import ILogger from '../../../common/interfaces/ilogger';
-import IMetrics from '../../../common/interfaces/imetrics';
-import IProduct from '../../interfaces/iproduct';
+import { inject } from 'inversify';
 import {
-  interfaces,
   controller,
   httpGet,
-  httpPost,
-  httpDelete,
+  interfaces,
   request,
-  queryParam,
-  response,
-  requestParam
+  requestParam,
+  response
 } from 'inversify-express-utils';
+import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
+import { ILogger, IMetrics } from '../../../common/interfaces';
+import { IProduct } from '../../interfaces';
+import { HttpError } from '../../models';
+import { ErrorResponseBuilder, HttpStatus } from '../../services';
 
 /**
  * Shop API Controller
@@ -59,7 +50,7 @@ class ShopController implements interfaces.Controller {
         this.metricsService.logAPIMetrics(req, res, HttpStatus.OK);
       },
       err => {
-        const error: HttpError = <HttpError>err;
+        const error: HttpError = err as HttpError;
         const resp = new ErrorResponseBuilder()
           .setTitle(error.name)
           .setStatus(HttpStatus.NOT_FOUND)
@@ -91,7 +82,7 @@ class ShopController implements interfaces.Controller {
         this.metricsService.logAPIMetrics(req, res, HttpStatus.OK);
       },
       err => {
-        const error: HttpError = <HttpError>err;
+        const error: HttpError = err as HttpError;
         const resp = new ErrorResponseBuilder()
           .setTitle(error.name)
           .setStatus(HttpStatus.NOT_FOUND)
@@ -123,7 +114,7 @@ class ShopController implements interfaces.Controller {
         this.metricsService.logAPIMetrics(req, res, HttpStatus.OK);
       },
       err => {
-        const error: HttpError = <HttpError>err;
+        const error: HttpError = err as HttpError;
         const resp = new ErrorResponseBuilder()
           .setTitle(error.name)
           .setStatus(HttpStatus.NOT_FOUND)
@@ -155,7 +146,7 @@ class ShopController implements interfaces.Controller {
         this.metricsService.logAPIMetrics(req, res, HttpStatus.OK);
       },
       err => {
-        const error: HttpError = <HttpError>err;
+        const error: HttpError = err as HttpError;
         const resp = new ErrorResponseBuilder()
           .setTitle(error.name)
           .setStatus(HttpStatus.NOT_FOUND)
@@ -279,7 +270,7 @@ class ShopController implements interfaces.Controller {
         }
       },
       err => {
-        const error: HttpError = <HttpError>err;
+        const error: HttpError = err as HttpError;
         const resp = new ErrorResponseBuilder()
           .setTitle(error.name)
           .setStatus(HttpStatus.NOT_FOUND)

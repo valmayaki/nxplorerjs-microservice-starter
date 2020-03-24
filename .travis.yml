@@ -3,9 +3,10 @@ sudo: required
 services:
   - docker
 node_js:
-  - "lts/carbon"
+  - lts/dubnium
 jobs:
   include:
+    # if: branch = master
     - stage: unit
       script:
         - npm install

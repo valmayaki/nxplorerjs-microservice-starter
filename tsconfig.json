@@ -2,10 +2,11 @@
   "compilerOptions": {
     "sourceMap": false,
     "target": "es6",
-    "module": "commonjs",
+    "module": "es6",
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
     "lib": [
       "es5",
       "es6",
@@ -28,5 +29,4 @@
     "server/**/*.spec.ts",
     "server/**/*.e2e.ts"
   ]
-  
 }

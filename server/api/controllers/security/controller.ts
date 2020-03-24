@@ -1,31 +1,17 @@
-import StarwarsService from '../../services/starwars.service';
 import { Request, Response } from 'express';
-import { Observable } from 'rxjs/Observable';
-import { ErrorResponseBuilder } from '../../services/response-builder';
-import { HttpError } from '../../models/error.model';
-import { HttpStatus } from '../../services/http-status-codes';
-import container from '../../../common/config/ioc_config';
-import { ISecurity, JWT_KeyType } from '../../../common/interfaces/isecurity';
-import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
-import SecurityService from '../../../common/services/security.service';
-import { inject, injectable } from 'inversify';
-import IDGenerator from '../../../common/config/utils';
-import * as jwt from 'jsonwebtoken';
-import * as fs from 'fs';
-
-import ILogger from '../../../common/interfaces/ilogger';
-
+import { inject } from 'inversify';
 import {
-  interfaces,
   controller,
-  httpGet,
   httpPost,
-  httpDelete,
+  interfaces,
   request,
-  queryParam,
-  response,
-  requestParam
+  response
 } from 'inversify-express-utils';
+import * as jwt from 'jsonwebtoken';
+import IDGenerator from '../../../common/config/utils';
+import SERVICE_IDENTIFIER from '../../../common/constants/identifiers';
+import { ILogger, ISecurity, JWT_KeyType } from '../../../common/interfaces';
+import { HttpStatus } from '../../services';
 
 /**
  * Controller for Security Token
@@ -50,9 +36,9 @@ class SecurityController implements interfaces.Controller {
    */
   @httpPost('/')
   public async login(@request() req: Request, @response() res: Response) {
-    const email = req.body.email,
-      password = req.body.password,
-      role = req.body.role;
+    const email = req.body.email;
+    const password = req.body.password;
+    const role = req.body.role;
     const privateKey = await this.securityService.getKey(JWT_KeyType.Private);
 
     if (this.validateEmailAndPassword(email, password)) {
